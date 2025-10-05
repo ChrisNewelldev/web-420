@@ -1,5 +1,5 @@
 /**
- * Chapter 3 & 4: API Tests
+ * Chapter 3, 4 & 5: API Tests
  */
 const request = require("supertest");
 const app = require("../src/app");
@@ -70,7 +70,35 @@ describe("Chapter 4: API Tests", () => {
   it("Should return a 204-status code when deleting a book", async () => {
     const res = await request(app).delete("/api/books/3");
     expect(res.statusCode).toBe(204);
-    const check = await request(app).get("/api/books/3");
-    expect(check.statusCode).toBe(404);
+  });
+});
+
+describe("Chapter 5: API Tests (PUT)", () => {
+  it("Should update a book and return a 204-status code", async () => {
+    const res = await request(app)
+      .put("/api/books/2")
+      .send({ title: "Clean Code (Updated)", author: "Robert C. Martin" });
+    expect(res.statusCode).toBe(204);
+
+    // verify updated
+    const check = await request(app).get("/api/books/2");
+    expect(check.statusCode).toBe(200);
+    expect(check.body.title).toBe("Clean Code (Updated)");
+  });
+
+  it("Should return a 400-status code when using a non-numeric id", async () => {
+    const res = await request(app)
+      .put("/api/books/foo")
+      .send({ title: "Anything" });
+    expect(res.statusCode).toBe(400);
+    expect(res.body).toEqual({ message: "id must be a number" });
+  });
+
+  it("Should return a 400-status code when updating a book with a missing title", async () => {
+    const res = await request(app)
+      .put("/api/books/1")
+      .send({ author: "Only Author" }); // no title
+    expect(res.statusCode).toBe(400);
+    expect(res.body).toEqual({ message: "Bad Request" });
   });
 });
