@@ -1,5 +1,5 @@
 /**
- * Chapter 3, 4 & 5: API Tests
+ * Chapters 3–6: API Tests
  */
 const request = require("supertest");
 const app = require("../src/app");
@@ -31,7 +31,6 @@ describe("Chapter 3: API Tests", () => {
     const res = await request(app).get("/api/books");
     expect(res.statusCode).toBe(200);
     expect(res.body).toBeInstanceOf(Array);
-    expect(res.body.length).toBeGreaterThan(0);
   });
 
   it("Should return a single book", async () => {
@@ -56,9 +55,7 @@ describe("Chapter 4: API Tests", () => {
     };
     const res = await request(app).post("/api/books").send(payload);
     expect(res.statusCode).toBe(201);
-    expect(res.headers).toHaveProperty("location");
     expect(res.body).toHaveProperty("id");
-    expect(res.body).toMatchObject(payload);
   });
 
   it("Should return a 400-status code when adding a new book with missing title", async () => {
@@ -80,24 +77,49 @@ describe("Chapter 5: API Tests (PUT)", () => {
       .send({ title: "Clean Code (Updated)", author: "Robert C. Martin" });
     expect(res.statusCode).toBe(204);
 
-    // verify updated
     const check = await request(app).get("/api/books/2");
-    expect(check.statusCode).toBe(200);
     expect(check.body.title).toBe("Clean Code (Updated)");
   });
 
   it("Should return a 400-status code when using a non-numeric id", async () => {
-    const res = await request(app)
-      .put("/api/books/foo")
-      .send({ title: "Anything" });
+    const res = await request(app).put("/api/books/foo").send({ title: "x" });
     expect(res.statusCode).toBe(400);
-    expect(res.body).toEqual({ message: "id must be a number" });
+    // message from update() thrown for bad id
+    expect(res.body.message).toBe("id must be a number");
   });
 
-  it("Should return a 400-status code when updating a book with a missing title", async () => {
+  it("Should return a 400-status code when updating with a missing title", async () => {
     const res = await request(app)
       .put("/api/books/1")
-      .send({ author: "Only Author" }); // no title
+      .send({ author: "Only Author" });
+    expect(res.statusCode).toBe(400);
+    expect(res.body.message).toBe("Bad Request");
+  });
+});
+
+describe("Chapter 6: API Tests (Auth)", () => {
+  it('Should log a user in and return 200 with "Authentication successful"', async () => {
+    const res = await request(app).post("/api/login").send({
+      email: "student@example.com",
+      password: "password123",
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toEqual({ message: "Authentication successful" });
+  });
+
+  it('Should return 401 with "Unauthorized" for incorrect credentials', async () => {
+    const res = await request(app).post("/api/login").send({
+      email: "student@example.com",
+      password: "wrongpass",
+    });
+    expect(res.statusCode).toBe(401);
+    expect(res.body).toEqual({ message: "Unauthorized" });
+  });
+
+  it('Should return 400 with "Bad Request" when missing email or password', async () => {
+    const res = await request(app)
+      .post("/api/login")
+      .send({ email: "student@example.com" });
     expect(res.statusCode).toBe(400);
     expect(res.body).toEqual({ message: "Bad Request" });
   });

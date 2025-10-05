@@ -12,6 +12,7 @@
   "author": "Chris Newell",
   "license": "MIT",
   "dependencies": {
+    "bcryptjs": "^3.0.2",
     "express": "^4.19.2"
   },
   "devDependencies": {
