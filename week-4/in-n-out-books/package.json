@@ -2,10 +2,11 @@
   "name": "in-n-out-books",
   "version": "1.0.0",
   "description": "WEB-420 Hands-On 2.1 – In-N-Out-Books web server",
-  "main": "app.js",
+  "main": "src/app.js",
   "scripts": {
-    "start": "node app.js",
-    "dev": "cross-env NODE_ENV=development nodemon app.js"
+    "start": "node src/app.js",
+    "dev": "cross-env NODE_ENV=development nodemon app.js",
+    "test": "jest"
   },
   "keywords": [],
   "author": "Chris Newell",
@@ -15,6 +16,8 @@
   },
   "devDependencies": {
     "cross-env": "^7.0.3",
-    "nodemon": "^3.1.0"
+    "jest": "^29.7.0",
+    "nodemon": "^3.1.0",
+    "supertest": "^6.3.4"
   }
 }
