@@ -1,0 +1,33 @@
+body {
+  font-family: system-ui, sans-serif;
+  background: #0f172a;
+  color: #e5e7eb;
+  line-height: 1.6;
+  margin: 0;
+  padding: 0;
+}
+header {
+  text-align: center;
+  padding: 2rem 1rem;
+  border-bottom: 1px solid #1f2937;
+}
+main {
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+section {
+  background: #111827;
+  border: 1px solid #1f2937;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  padding: 1rem;
+}
+h1, h2 { color: #93c5fd; }
+footer {
+  text-align: center;
+  color: #9ca3af;
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid #1f2937;
+}
