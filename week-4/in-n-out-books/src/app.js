@@ -1,9 +1,11 @@
 /**
  * File: src/app.js
- * Description: JSON Web Service for In-N-Out-Books (Ch.3–6)
+ * Description: JSON Web Service for In-N-Out-Books (Ch.3–7)
  */
 const express = require("express");
 const bcrypt = require("bcryptjs");
+const Ajv = require("ajv");
+
 const {
   find,
   findOne,
@@ -16,7 +18,7 @@ const users = require("../database/users");
 const app = express();
 app.use(express.json());
 
-// ------- Books (existing) -------
+// ---------------- Books (Ch.3–5) ----------------
 app.get("/api/books", (req, res) => {
   try {
     return res.status(200).json(find());
@@ -77,27 +79,68 @@ app.delete("/api/books/:id", (req, res) => {
   }
 });
 
-// ------- Auth (new for Ch.6) -------
+// ---------------- Auth (Ch.6) ----------------
 app.post("/api/login", (req, res) => {
   try {
     const { email, password } = req.body || {};
+    if (!email || !password)
+      return res.status(400).json({ message: "Bad Request" });
 
-    // 400: missing input
-    if (!email || !password) {
+    const user = users.find((u) => u.email === String(email).toLowerCase());
+    if (!user) return res.status(401).json({ message: "Unauthorized" });
+
+    const ok = bcrypt.compareSync(String(password), user.password);
+    if (!ok) return res.status(401).json({ message: "Unauthorized" });
+
+    return res.status(200).json({ message: "Authentication successful" });
+  } catch {
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
+// ---------------- Security Q&A (Ch.7) ----------------
+// POST /api/users/:email/verify-security-question
+// Body must be an array of { answer: string } objects (order matters)
+const ajv = new Ajv({ allErrors: true, removeAdditional: "all" });
+const answersSchema = {
+  type: "array",
+  items: {
+    type: "object",
+    additionalProperties: false,
+    required: ["answer"],
+    properties: { answer: { type: "string" } },
+  },
+};
+const validateAnswers = ajv.compile(answersSchema);
+
+app.post("/api/users/:email/verify-security-question", (req, res) => {
+  try {
+    const { email } = req.params;
+    const body = req.body;
+
+    // 400 if fails AJV validation
+    if (!validateAnswers(body)) {
       return res.status(400).json({ message: "Bad Request" });
     }
 
     const user = users.find((u) => u.email === String(email).toLowerCase());
-    if (!user) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
+    if (!user) return res.status(401).json({ message: "Unauthorized" });
 
-    const ok = bcrypt.compareSync(String(password), user.password);
-    if (!ok) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
+    // Compare order + content; trim/lowercase to be forgiving
+    const provided = body.map((x) => String(x.answer).trim().toLowerCase());
+    const expected = user.securityAnswers.map((a) =>
+      String(a).trim().toLowerCase()
+    );
 
-    return res.status(200).json({ message: "Authentication successful" });
+    const matches =
+      provided.length === expected.length &&
+      provided.every((ans, i) => ans === expected[i]);
+
+    if (!matches) return res.status(401).json({ message: "Unauthorized" });
+
+    return res
+      .status(200)
+      .json({ message: "Security questions successfully answered" });
   } catch {
     return res.status(500).json({ message: "Internal Server Error" });
   }
